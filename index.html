@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guías de Deploy — Desarrollo Web USAC 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #161b27;
+    --border: #2a3347;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .container { max-width: 800px; width: 100%; text-align: center; }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .subtitle {
+    font-size: 17px;
+    color: var(--muted);
+    margin-bottom: 56px;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  @media(max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: left;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.2s, border-color 0.2s;
+    display: block;
+  }
+
+  .card:hover { transform: translateY(-4px); }
+  .card.blue:hover { border-color: var(--blue); }
+  .card.green:hover { border-color: var(--green); }
+
+  .card-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  .card.blue .card-badge { background: rgba(37,99,235,0.15); color: #60a5fa; border: 1px solid rgba(37,99,235,0.3); }
+  .card.green .card-badge { background: rgba(22,163,74,0.15); color: #4ade80; border: 1px solid rgba(22,163,74,0.3); }
+
+  .card h2 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+  .card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .card.blue .cta { color: #60a5fa; }
+  .card.green .cta { color: #4ade80; }
+
+  .footer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="eyebrow">USAC · Facultad de Ingeniería · Desarrollo Web 2026</div>
+  <h1>Guías de Deploy<br>a la Nube</h1>
+  <p class="subtitle">Dos métodos para subir tu app React + Node.js + MySQL a internet de forma gratuita.</p>
+
+  <div class="cards">
+    <a href="guia-1-tableplus.html" class="card blue">
+      <div class="card-badge">Método 1</div>
+      <h2>Deploy con TablePlus</h2>
+      <p>Cargás el schema de la base de datos manualmente usando TablePlus como cliente MySQL visual.</p>
+      <div class="card-tags">
+        <span class="tag">Railway</span>
+        <span class="tag">MySQL</span>
+        <span class="tag">TablePlus</span>
+        <span class="tag">Vercel</span>
+      </div>
+      <div class="cta">Ver guía →</div>
+    </a>
+
+    <a href="guia-2-sin-tableplus.html" class="card green">
+      <div class="card-badge">Método 2</div>
+      <h2>Deploy sin TablePlus</h2>
+      <p>El backend crea las tablas automáticamente al iniciar usando un script de migración. No necesitás herramientas externas.</p>
+      <div class="card-tags">
+        <span class="tag">Railway</span>
+        <span class="tag">MySQL</span>
+        <span class="tag">Auto-migration</span>
+        <span class="tag">Vercel</span>
+      </div>
+      <div class="cta">Ver guía →</div>
+    </a>
+  </div>
+
+  <div class="footer">
+    <p>Railway (backend + MySQL) + Vercel (frontend) · Deploy 100% gratuito</p>
+  </div>
+</div>
+</body>
+</html>

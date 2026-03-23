@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía 1 — Deploy con TablePlus</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --border: #e5e0d8;
+    --accent: #2563eb;
+    --green: #16a34a;
+    --red: #dc2626;
+    --yellow: #d97706;
+    --purple: #7c3aed;
+    --text: #1c1917;
+    --muted: #78716c;
+    --code-bg: #1e1e2e;
+    --railway: #7c3aed;
+    --vercel: #000000;
+    --mysql: #f97316;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    line-height: 1.7;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--accent);
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .topbar a { color: #bfdbfe; text-decoration: none; margin: 0 12px; }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-brand {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .sidebar-brand .version {
+    display: inline-block;
+    background: #dbeafe;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 100px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-brand h2 {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .sidebar-brand p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .nav-group { margin-bottom: 8px; }
+
+  .nav-group-title {
+    padding: 8px 24px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .nav-group a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 24px;
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-group a:hover {
+    color: var(--accent);
+    background: #eff6ff;
+    border-left-color: var(--accent);
+  }
+
+  .nav-group a.active {
+    color: var(--accent);
+    background: #eff6ff;
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* MAIN */
+  .main { padding: 0; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+    padding: 72px 64px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: 'GUÍA 1';
+    position: absolute;
+    right: 48px;
+    top: 48px;
+    font-size: 100px;
+    font-weight: 800;
+    opacity: 0.08;
+    line-height: 1;
+  }
+
+  .hero .method-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .hero h1 {
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .hero p {
+    font-size: 17px;
+    opacity: 0.85;
+    max-width: 560px;
+    margin-bottom: 28px;
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hero-tag {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* CONTENT */
+  .content { padding: 56px 64px; max-width: 860px; }
+
+  /* SECTION */
+  .section { margin-bottom: 64px; scroll-margin-top: 24px; }
+
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .section-num .n {
+    background: var(--accent);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .section-num .label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .section h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .section .lead {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    max-width: 600px;
+  }
+
+  /* STEP LIST */
+  .step-list { list-style: none; counter-reset: steps; }
+
+  .step-list li {
+    counter-increment: steps;
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .step-list li:last-child { border-bottom: none; }
+
+  .step-list li::before {
+    content: counter(steps);
+    background: var(--text);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-list li .step-content { flex: 1; }
+  .step-list li .step-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .step-list li .step-desc { font-size: 14px; color: #44403c; line-height: 1.6; }
+
+  /* CODE */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+
+  .code-header {
+    background: #181825;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #313244;
+  }
+
+  .code-header .filename {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #cdd6f4;
+    opacity: 0.7;
+  }
+
+  .code-header .lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #6c7086;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .code-block pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    color: #cdd6f4;
+  }
+
+  .c-kw { color: #cba6f7; }
+  .c-str { color: #a6e3a1; }
+  .c-com { color: #6c7086; font-style: italic; }
+  .c-var { color: #89dceb; }
+  .c-num { color: #fab387; }
+  .c-fn { color: #89b4fa; }
+  .c-old { color: #f38ba8; text-decoration: line-through; opacity: 0.8; }
+  .c-new { color: #a6e3a1; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+
+  .card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ALERT */
+  .alert {
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 14px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    line-height: 1.6;
+  }
+
+  .alert-icon { flex-shrink: 0; font-size: 18px; margin-top: 1px; }
+  .alert.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .alert.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+  .alert.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+  /* TABLE */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    background: #f5f5f4;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .data-table .key { color: var(--yellow); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+  .data-table .val { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .data-table .note { color: var(--muted); font-size: 12px; }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 2px dashed var(--border); margin: 48px 0; }
+
+  /* INLINE CODE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f5f5f4;
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--purple);
+  }
+
+  strong { font-weight: 700; }
+
+  @media(max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .hero, .content { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  Guía de Deploy — Método con TablePlus &nbsp;|&nbsp;
+  <a href="guia-2.html">Ver Guía 2 — Sin TablePlus →</a>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="version">Método 1</div>
+      <h2>Deploy con<br>TablePlus</h2>
+      <p>Railway + Vercel + TablePlus</p>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Introducción</div>
+      <a href="#resumen">📋 Resumen del proceso</a>
+      <a href="#prereqs">✅ Prerrequisitos</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Base de Datos</div>
+      <a href="#railway-mysql">🗄️ MySQL en Railway</a>
+      <a href="#tableplus">🐘 Conectar TablePlus</a>
+      <a href="#schema">📊 Ejecutar el schema</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Backend</div>
+      <a href="#railway-backend">⚙️ Backend en Railway</a>
+      <a href="#root-dir">📁 Root Directory</a>
+      <a href="#variables">🔑 Variables de entorno</a>
+      <a href="#dominio">🌐 Generar dominio</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Código</div>
+      <a href="#cambio-codigo">✏️ Cambio en api.js</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Frontend</div>
+      <a href="#vercel">▲ Deploy en Vercel</a>
+      <a href="#env-vercel">🔧 Variables en Vercel</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Verificación</div>
+      <a href="#verificar">🧪 Verificar deploy</a>
+      <a href="#errores">🐛 Errores comunes</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="method-badge">⚠️ Método 1 — Con TablePlus</div>
+      <h1>Deploy de App Web<br>usando TablePlus</h1>
+      <p>En este método cargamos el schema de la base de datos manualmente usando TablePlus. Es útil cuando el backend no tiene migración automática.</p>
+      <div class="hero-tags">
+        <span class="hero-tag">Railway</span>
+        <span class="hero-tag">MySQL</span>
+        <span class="hero-tag">TablePlus</span>
+        <span class="hero-tag">Vercel</span>
+        <span class="hero-tag">Node.js</span>
+        <span class="hero-tag">React.js</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- RESUMEN -->
+      <div class="section" id="resumen">
+        <div class="section-num"><div class="n">0</div><span class="label">Introducción</span></div>
+        <h2>Resumen del proceso</h2>
+        <p class="lead">Antes de empezar, entendé qué vas a hacer y en qué orden.</p>
+
+        <div class="card">
+          <h4>🗺️ Flujo completo del deploy</h4>
+          <ul class="step-list">
+            <li>
+              <div class="step-content">
+                <div class="step-title">Crear MySQL en Railway</div>
+                <div class="step-desc">Railway nos da una base de datos MySQL lista para usar con credenciales automáticas.</div>
+              </div>
+            </li>
+            <li>
+              <div class="step-content">
+                <div class="step-title">Conectar TablePlus a Railway</div>
+                <div class="step-desc">Usamos TablePlus como cliente visual para conectarnos a MySQL y ejecutar el schema.</div>
+              </div>
+            </li>
+            <li>
+              <div class="step-content">
+                <div class="step-title">Ejecutar el schema.sql</div>
+                <div class="step-desc">Creamos todas las tablas en la base de datos ejecutando cada CREATE TABLE por separado.</div>
+              </div>
+            </li>
+            <li>
+              <div class="step-content">
+                <div class="step-title">Hacer el cambio en api.js</div>
+                <div class="step-desc">Cambiamos la URL del backend de hardcodeada a variable de entorno en el frontend.</div>
+              </div>
+            </li>
+            <li>
+              <div class="step-content">
+                <div class="step-title">Deploy del backend en Railway</div>
+                <div class="step-desc">Conectamos el repo de GitHub, configuramos el Root Directory y las variables de entorno.</div>
+              </div>
+            </li>
+            <li>
+              <div class="step-content">
+                <div class="step-title">Deploy del frontend en Vercel</div>
+                <div class="step-desc">Conectamos el repo, configuramos la carpeta del frontend y la URL del backend.</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">ℹ️</span>
+          <div>La arquitectura final es: <strong>Vercel</strong> (frontend React) → <strong>Railway Backend</strong> (Node.js/Express) → <strong>Railway MySQL</strong>. Los tres se comunican entre sí en producción.</div>
+        </div>
+      </div>
+
+      <!-- PREREQS -->
+      <div class="section" id="prereqs">
+        <div class="section-num"><div class="n">0</div><span class="label">Antes de empezar</span></div>
+        <h2>Prerrequisitos</h2>
+        <p class="lead">Asegurate de tener todo esto antes de empezar.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Cuenta en GitHub con el repositorio del proyecto</div>
+              <div class="step-desc">El repositorio debe ser tuyo (no un fork o repo ajeno sin acceso). Railway y Vercel necesitan permisos para leer el repo.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">TablePlus instalado</div>
+              <div class="step-desc">Descargalo gratis desde <strong>tableplus.com</strong>. La versión gratuita permite hasta 2 conexiones abiertas simultáneas, lo cual es suficiente.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">El archivo schema.sql del proyecto</div>
+              <div class="step-desc">Está en la carpeta <code>backend/database/schema.sql</code> del repositorio. Lo necesitás para crear las tablas en MySQL.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Cambio en api.js hecho y subido a GitHub</div>
+              <div class="step-desc">Ver sección <strong>"Cambio en api.js"</strong> más adelante. Este cambio debe estar en el repo antes de hacer el deploy del frontend.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <hr class="divider">
+
+      <!-- RAILWAY MYSQL -->
+      <div class="section" id="railway-mysql">
+        <div class="section-num"><div class="n">1</div><span class="label">Base de Datos</span></div>
+        <h2>Crear MySQL en Railway</h2>
+        <p class="lead">Railway nos provee una base de datos MySQL completamente configurada en menos de un minuto.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Entrar a railway.app</div>
+              <div class="step-desc">Ir a <strong>railway.app</strong> → clic en <strong>"Login"</strong> → <strong>"Login with GitHub"</strong> → autorizar Railway en tu cuenta de GitHub.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Crear un nuevo proyecto</div>
+              <div class="step-desc">Clic en <strong>"New Project"</strong> → seleccionar <strong>"Add a service"</strong> → seleccionar <strong>"Database"</strong> → seleccionar <strong>"MySQL"</strong>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Esperar que el servicio quede activo</div>
+              <div class="step-desc">Railway tarda aproximadamente 30-60 segundos. El estado debe cambiar de "Deploying" a <strong>"Active"</strong> con un punto verde.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Guardar las credenciales</div>
+              <div class="step-desc">Clic en el servicio MySQL → pestaña <strong>"Variables"</strong>. Vas a ver las siguientes variables generadas automáticamente por Railway. Guárdalas, las necesitarás después:</div>
+            </div>
+          </li>
+        </ul>
+
+        <table class="data-table">
+          <thead><tr><th>Variable</th><th>Descripción</th><th>Ejemplo</th></tr></thead>
+          <tbody>
+            <tr><td class="key">MYSQL_PUBLIC_URL</td><td class="note">URL completa para conectarse desde fuera de Railway</td><td class="mono">mysql://root:pass@host:puerto/railway</td></tr>
+            <tr><td class="key">MYSQL_ROOT_PASSWORD</td><td class="note">Contraseña del usuario root</td><td class="mono">AbCdEfGhIjKlMnOp</td></tr>
+            <tr><td class="key">MYSQLHOST</td><td class="note">Host interno (solo funciona dentro de Railway)</td><td class="mono">mysql.railway.internal</td></tr>
+            <tr><td class="key">MYSQLPORT</td><td class="note">Puerto interno</td><td class="mono">3306</td></tr>
+            <tr><td class="key">MYSQLDATABASE</td><td class="note">Nombre de la base de datos</td><td class="mono">railway</td></tr>
+            <tr><td class="key">MYSQLUSER</td><td class="note">Usuario de la BD</td><td class="mono">root</td></tr>
+          </tbody>
+        </table>
+
+        <div class="alert warn">
+          <span class="alert-icon">⚠️</span>
+          <div>Para conectarte desde TablePlus necesitás usar la <strong>MYSQL_PUBLIC_URL</strong>, no el host interno. El host interno solo funciona desde dentro de la red de Railway.</div>
+        </div>
+      </div>
+
+      <!-- TABLEPLUS -->
+      <div class="section" id="tableplus">
+        <div class="section-num"><div class="n">2</div><span class="label">Cliente MySQL</span></div>
+        <h2>Conectar TablePlus a Railway</h2>
+        <p class="lead">TablePlus es una herramienta visual para gestionar bases de datos. La usamos para ejecutar el schema.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Abrir TablePlus</div>
+              <div class="step-desc">Si no lo tenés instalado, descargarlo gratis desde <strong>tableplus.com</strong> e instalarlo.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Crear nueva conexión</div>
+              <div class="step-desc">Clic en <strong>"Create a new connection"</strong> (o el ícono + abajo a la izquierda) → seleccionar <strong>"MySQL"</strong>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Llenar los datos de conexión</div>
+              <div class="step-desc">Tomá los valores de la <strong>MYSQL_PUBLIC_URL</strong> de Railway. El formato es <code>mysql://usuario:contraseña@host:puerto/database</code>. Llenás cada campo así:</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="card">
+          <h4>🔌 Datos de conexión para TablePlus</h4>
+          <table class="data-table">
+            <thead><tr><th>Campo en TablePlus</th><th>Valor</th><th>De dónde viene</th></tr></thead>
+            <tbody>
+              <tr><td>Name</td><td class="mono">Railway DB</td><td class="note">Cualquier nombre descriptivo</td></tr>
+              <tr><td>Host/IP</td><td class="mono">caboose.proxy.rlwy.net</td><td class="note">Host de MYSQL_PUBLIC_URL</td></tr>
+              <tr><td>Port</td><td class="mono">58025</td><td class="note">Puerto de MYSQL_PUBLIC_URL (varía)</td></tr>
+              <tr><td>User</td><td class="mono">root</td><td class="note">MYSQLUSER</td></tr>
+              <tr><td>Password</td><td class="mono">[tu contraseña]</td><td class="note">MYSQL_ROOT_PASSWORD</td></tr>
+              <tr><td>Database</td><td class="mono">railway</td><td class="note">MYSQLDATABASE</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Probar la conexión</div>
+              <div class="step-desc">Clic en <strong>"Test"</strong> en la parte inferior del formulario. Debe aparecer un mensaje en verde indicando que la conexión fue exitosa.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Conectar</div>
+              <div class="step-desc">Clic en <strong>"Connect"</strong>. Se abre la interfaz principal de TablePlus mostrando la base de datos <code>railway</code> (vacía por ahora).</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="alert error">
+          <span class="alert-icon">🚫</span>
+          <div><strong>Error "Lost connection":</strong> Significa que el host o puerto son incorrectos, o que Railway aún no terminó de iniciar el servicio MySQL. Esperá 1-2 minutos y volvé a intentar. Verificá que estés usando el puerto de la URL pública, no el 3306.</div>
+        </div>
+      </div>
+
+      <!-- SCHEMA -->
+      <div class="section" id="schema">
+        <div class="section-num"><div class="n">3</div><span class="label">Tablas</span></div>
+        <h2>Ejecutar el schema en TablePlus</h2>
+        <p class="lead">Creamos todas las tablas ejecutando el schema SQL. Hay que hacerlo en partes porque TablePlus puede fallar con múltiples queries a la vez.</p>
+
+        <div class="alert warn">
+          <span class="alert-icon">⚠️</span>
+          <div><strong>Importante:</strong> El archivo <code>schema.sql</code> original tiene las líneas <code>CREATE DATABASE profesor_ratings</code> y <code>USE profesor_ratings</code> al inicio. <strong>Hay que ignorar o borrar esas líneas</strong> antes de ejecutar, porque Railway ya tiene su propia base de datos llamada <code>railway</code>.</div>
+        </div>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Abrir el editor SQL</div>
+              <div class="step-desc">En TablePlus presionar <strong>Ctrl+Q</strong> (Windows) o <strong>Cmd+Q</strong> (Mac) para abrir el editor de queries SQL.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Ejecutar cada CREATE TABLE por separado</div>
+              <div class="step-desc">Copiar y pegar <strong>un solo CREATE TABLE</strong> a la vez en el editor y presionar <strong>"Run Current"</strong>. No pegar todo el schema de una sola vez.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Orden correcto de las tablas</div>
+              <div class="step-desc">Respetar el orden porque algunas tablas tienen llaves foráneas que dependen de otras:</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="card">
+          <h4>📋 Orden de ejecución de tablas</h4>
+          <ol style="padding-left:20px; font-size:14px; line-height:2.2;">
+            <li><code>usuarios</code></li>
+            <li><code>catedraticos</code></li>
+            <li><code>cursos</code></li>
+            <li><code>curso_catedratico</code> (depende de cursos y catedraticos)</li>
+            <li><code>publicaciones</code> (depende de usuarios)</li>
+            <li><code>comentarios</code> (depende de publicaciones y usuarios)</li>
+            <li><code>cursos_aprobados</code> (depende de usuarios y cursos)</li>
+          </ol>
+        </div>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Verificar que se crearon las tablas</div>
+              <div class="step-desc">En el panel izquierdo de TablePlus presionar <strong>Ctrl+R</strong> para refrescar. Deberían aparecer las 7 tablas listadas.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Ejecutar los datos de ejemplo (opcional)</div>
+              <div class="step-desc">Si el proyecto tiene un archivo <code>seed.sql</code>, ejecutar también los INSERT para tener datos de prueba. Hacerlo después de crear todas las tablas.</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="alert error">
+          <span class="alert-icon">🚫</span>
+          <div><strong>Error "Failed to open referenced table":</strong> Significa que estás intentando crear una tabla que referencia otra que aún no existe. Revisá el orden de ejecución y asegurate de crear primero las tablas independientes.</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- CAMBIO CODIGO -->
+      <div class="section" id="cambio-codigo">
+        <div class="section-num"><div class="n">4</div><span class="label">Código</span></div>
+        <h2>Cambio obligatorio en api.js</h2>
+        <p class="lead">Este cambio hay que hacerlo antes de subir el frontend a Vercel. Sin este cambio, el frontend seguirá intentando conectarse a localhost.</p>
+
+        <div class="alert error">
+          <span class="alert-icon">🚨</span>
+          <div><strong>Este es el error más común.</strong> Si olvidás este cambio, el frontend va a funcionar visualmente pero todas las peticiones al backend van a fallar con error <code>ERR_CONNECTION_REFUSED</code>.</div>
+        </div>
+
+        <p style="margin-bottom:16px; font-size:15px;">Abrir el archivo <code>frontend/src/services/api.js</code> en VS Code y hacer este cambio:</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="filename">frontend/src/services/api.js</span>
+            <span class="lang">JavaScript</span>
+          </div>
+          <pre><span class="c-com">// ❌ ANTES — URL hardcodeada, solo funciona en tu compu</span>
+<span class="c-old">const API_URL = 'http://localhost:5000/api';</span>
+
+<span class="c-com">// ✅ DESPUÉS — Lee variable de entorno, funciona en producción</span>
+<span class="c-new">const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';</span></pre>
+        </div>
+
+        <div class="card">
+          <h4>💡 ¿Por qué este cambio?</h4>
+          <p style="font-size:14px; line-height:1.7; color:#44403c;">
+            <code>process.env.REACT_APP_API_URL</code> lee una variable de entorno que vamos a configurar en Vercel con la URL real del backend de Railway. El <code>||</code> significa "o" — si la variable no existe (como cuando trabajamos en local), usa localhost como fallback. Así el mismo código funciona en desarrollo y producción sin cambios adicionales.
+            <br><br>
+            React solo expone al navegador las variables que empiezan con <strong>REACT_APP_</strong>. Si la variable no tiene ese prefijo, React no la incluye en el build por seguridad.
+          </p>
+        </div>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Hacer el cambio en VS Code</div>
+              <div class="step-desc">Abrir <code>frontend/src/services/api.js</code>, reemplazar la línea de API_URL y guardar el archivo.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Hacer commit y push a GitHub</div>
+              <div class="step-desc">Con GitKraken: escribir un mensaje de commit como <strong>"fix: usar variable de entorno para API URL"</strong> → Stage All → Commit → Push. Con terminal: <code>git add . && git commit -m "fix: api url" && git push</code>.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <hr class="divider">
+
+      <!-- RAILWAY BACKEND -->
+      <div class="section" id="railway-backend">
+        <div class="section-num"><div class="n">5</div><span class="label">Servidor</span></div>
+        <h2>Deploy del backend en Railway</h2>
+        <p class="lead">Conectamos el repositorio de GitHub al proyecto de Railway para que haga el deploy del backend automáticamente.</p>
+
+        <div class="alert warn">
+          <span class="alert-icon">⚠️</span>
+          <div><strong>Crítico:</strong> El servicio del backend debe estar en el <strong>mismo proyecto</strong> de Railway que el servicio MySQL. Si están en proyectos diferentes, no se pueden comunicar internamente y el backend no podrá conectarse a la BD.</div>
+        </div>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Agregar servicio en el mismo proyecto</div>
+              <div class="step-desc">En Railway, dentro del mismo proyecto donde está MySQL, clic en el botón <strong>"+"</strong> o <strong>"Add a service"</strong> → seleccionar <strong>"GitHub Repo"</strong>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Buscar y seleccionar el repositorio</div>
+              <div class="step-desc">Buscar el nombre de tu repositorio. Si no aparece, clic en <strong>"Configure GitHub App"</strong>, autorizar acceso al repo específico en GitHub, y volver a Railway.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Railway intenta hacer deploy automáticamente</div>
+              <div class="step-desc">Va a fallar porque aún no hemos configurado el Root Directory ni las variables. Ese error es esperado en este punto.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- ROOT DIR -->
+      <div class="section" id="root-dir">
+        <div class="section-num"><div class="n">6</div><span class="label">Configuración</span></div>
+        <h2>Configurar el Root Directory</h2>
+        <p class="lead">El Root Directory le dice a Railway en qué carpeta del repositorio está el backend.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Ir a Settings del servicio del backend</div>
+              <div class="step-desc">Clic en el servicio del backend (no en MySQL) → pestaña <strong>"Settings"</strong>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Configurar el Root Directory</div>
+              <div class="step-desc">Buscar la sección <strong>"Root Directory"</strong> → clic en el campo → escribir la ruta según la estructura de tu repositorio. Ejemplo:</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="filename">Root Directory en Railway</span>
+            <span class="lang">Path</span>
+          </div>
+          <pre><span class="c-com"># Si tu repo tiene esta estructura:</span>
+<span class="c-com"># mi-repo/</span>
+<span class="c-com">#   ├── profesor-ratings-app/</span>
+<span class="c-com">#   │   ├── backend/</span>
+<span class="c-com">#   │   └── frontend/</span>
+
+<span class="c-new">profesor-ratings-app/backend</span>
+
+<span class="c-com"># Si el backend está directo en la raíz del repo:</span>
+<span class="c-new">backend</span></pre>
+        </div>
+
+        <div class="alert info">
+          <span class="alert-icon">💡</span>
+          <div>Para saber la ruta correcta, abrí el repositorio en GitHub y fijate cómo está organizado. La ruta en Root Directory debe llegar exactamente hasta la carpeta que contiene el <code>package.json</code> del backend.</div>
+        </div>
+      </div>
+
+      <!-- VARIABLES -->
+      <div class="section" id="variables">
+        <div class="section-num"><div class="n">7</div><span class="label">Entorno</span></div>
+        <h2>Variables de entorno del backend</h2>
+        <p class="lead">Configuramos las variables que reemplazan el archivo .env en producción.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Ir a Variables del servicio del backend</div>
+              <div class="step-desc">Clic en el servicio del backend → pestaña <strong>"Variables"</strong>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Agregar las variables de MySQL usando referencias</div>
+              <div class="step-desc">Para las variables de BD, en lugar de copiar y pegar la contraseña, usar <strong>"Add Reference"</strong> → clic en el ícono <code>{}</code> al lado del campo de valor → buscar y seleccionar la variable del servicio MySQL. Esto crea una referencia dinámica.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Agregar el resto de variables manualmente</div>
+              <div class="step-desc">Las que no son de MySQL se escriben directamente en el campo de valor.</div>
+            </div>
+          </li>
+        </ul>
+
+        <table class="data-table">
+          <thead><tr><th>Variable</th><th>Valor / Referencia</th><th>Tipo</th></tr></thead>
+          <tbody>
+            <tr><td class="key">DB_HOST</td><td class="val">${{MySQL.MYSQLHOST}}</td><td class="note">Referencia → mysql.railway.internal</td></tr>
+            <tr><td class="key">DB_USER</td><td class="val">${{MySQL.MYSQLUSER}}</td><td class="note">Referencia → root</td></tr>
+            <tr><td class="key">DB_PASSWORD</td><td class="val">${{MySQL.MYSQLPASSWORD}}</td><td class="note">Referencia → contraseña generada</td></tr>
+            <tr><td class="key">DB_NAME</td><td class="val">${{MySQL.MYSQLDATABASE}}</td><td class="note">Referencia → railway</td></tr>
+            <tr><td class="key">DB_PORT</td><td class="val">${{MySQL.MYSQLPORT}}</td><td class="note">Referencia → 3306</td></tr>
+            <tr><td class="key">PORT</td><td class="val">5000</td><td class="note">Texto directo</td></tr>
+            <tr><td class="key">NODE_ENV</td><td class="val">production</td><td class="note">Texto directo</td></tr>
+            <tr><td class="key">JWT_SECRET</td><td class="val">tu_clave_secreta_larga</td><td class="note">Texto directo — inventá una clave segura</td></tr>
+            <tr><td class="key">JWT_EXPIRE</td><td class="val">7d</td><td class="note">Texto directo</td></tr>
+            <tr><td class="key">CORS_ORIGIN</td><td class="val">URL de tu app en Vercel</td><td class="note">La sabrás después del deploy en Vercel</td></tr>
+          </tbody>
+        </table>
+
+        <div class="alert info">
+          <span class="alert-icon">💡</span>
+          <div><strong>CORS_ORIGIN:</strong> Si aún no sabés la URL de Vercel, podés poner <code>*</code> temporalmente para que acepte peticiones de cualquier origen. Después de hacer el deploy en Vercel, actualizás esta variable con la URL exacta y redeploy el backend.</div>
+        </div>
+      </div>
+
+      <!-- DOMINIO -->
+      <div class="section" id="dominio">
+        <div class="section-num"><div class="n">8</div><span class="label">URL pública</span></div>
+        <h2>Generar el dominio del backend</h2>
+        <p class="lead">Railway nos da una URL pública para que el frontend pueda comunicarse con el backend.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Ir a Settings → Networking</div>
+              <div class="step-desc">En el servicio del backend → <strong>Settings</strong> → sección <strong>"Networking"</strong> → <strong>"Public Networking"</strong>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Clic en "Generate Domain"</div>
+              <div class="step-desc">Railway genera una URL del tipo <code>tu-app.up.railway.app</code>. Copiá esa URL.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Verificar que el backend responde</div>
+              <div class="step-desc">Abrir en el navegador: <code>https://tu-dominio.up.railway.app/api/health</code>. Debe responder con un JSON como <code>&#123;"message":"Servidor funcionando correctamente"&#125;</code>.</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="alert success">
+          <span class="alert-icon">✅</span>
+          <div>Si el endpoint <code>/api/health</code> responde correctamente, el backend está funcionando y conectado a la base de datos. Si da error 500, revisá los logs en Railway → Deployments → View Logs.</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- VERCEL -->
+      <div class="section" id="vercel">
+        <div class="section-num"><div class="n">9</div><span class="label">Frontend</span></div>
+        <h2>Deploy del frontend en Vercel</h2>
+        <p class="lead">Vercel está especializado en frontends React y hace el build y deploy automáticamente.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Crear cuenta en Vercel</div>
+              <div class="step-desc">Ir a <strong>vercel.com</strong> → <strong>"Sign Up"</strong> → <strong>"Continue with GitHub"</strong> → autorizar Vercel en tu cuenta de GitHub.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Importar el proyecto</div>
+              <div class="step-desc">Clic en <strong>"Add New Project"</strong> → <strong>"Import Git Repository"</strong> → buscar y seleccionar tu repositorio de GitHub.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Configurar el Root Directory</div>
+              <div class="step-desc">En la pantalla de configuración, buscar <strong>"Root Directory"</strong> → clic en <strong>"Edit"</strong> → escribir la ruta a la carpeta del frontend. Ejemplo: <code>profesor-ratings-app/frontend</code>.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Vercel detecta React automáticamente</div>
+              <div class="step-desc">Vercel detecta que es una app React y configura automáticamente el comando de build (<code>npm run build</code>) y la carpeta de salida (<code>build/</code>). No hay que cambiar nada.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- ENV VERCEL -->
+      <div class="section" id="env-vercel">
+        <div class="section-num"><div class="n">10</div><span class="label">Variables</span></div>
+        <h2>Configurar variables en Vercel</h2>
+        <p class="lead">Antes de hacer deploy, agregar la variable de entorno con la URL del backend.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Expandir "Environment Variables"</div>
+              <div class="step-desc">En la pantalla de configuración del deploy en Vercel, buscar la sección <strong>"Environment Variables"</strong> y expandirla.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Agregar la variable REACT_APP_API_URL</div>
+              <div class="step-desc">En el campo <strong>Name</strong> escribir: <code>REACT_APP_API_URL</code>. En el campo <strong>Value</strong> pegar la URL del backend de Railway seguida de <code>/api</code>.</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="filename">Variable en Vercel</span>
+            <span class="lang">ENV</span>
+          </div>
+          <pre><span class="c-var">REACT_APP_API_URL</span> = <span class="c-str">https://tu-backend.up.railway.app/api</span>
+
+<span class="c-com"># Importante: incluir /api al final</span>
+<span class="c-com"># Reemplazar "tu-backend" con el dominio que generó Railway</span></pre>
+        </div>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Clic en "Deploy"</div>
+              <div class="step-desc">Vercel construye la app React con <code>npm run build</code> y la despliega. El proceso tarda entre 1 y 3 minutos.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Verificar que el deploy dice "Ready"</div>
+              <div class="step-desc">Cuando el estado cambia a <strong>"Ready"</strong>, clic en el dominio generado para abrir la app en el navegador.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Actualizar CORS_ORIGIN en Railway</div>
+              <div class="step-desc">Copiar la URL de Vercel → ir a Railway → servicio backend → Variables → editar <code>CORS_ORIGIN</code> → pegar la URL de Vercel → Railway hace redeploy automático.</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="alert warn">
+          <span class="alert-icon">⚠️</span>
+          <div>Si cambiás variables en Vercel después del deploy, hay que hacer <strong>Redeploy</strong> para que tomen efecto. Ir a Deployments → clic en los tres puntos del último deploy → Redeploy.</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- VERIFICAR -->
+      <div class="section" id="verificar">
+        <div class="section-num"><div class="n">11</div><span class="label">Pruebas</span></div>
+        <h2>Verificar que todo funciona</h2>
+        <p class="lead">Checklist final para confirmar que el deploy está completo.</p>
+
+        <ul class="step-list">
+          <li>
+            <div class="step-content">
+              <div class="step-title">Backend responde en /api/health</div>
+              <div class="step-desc">Abrir <code>https://tu-backend.up.railway.app/api/health</code> en el navegador. Debe devolver JSON con mensaje de éxito.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Frontend carga correctamente</div>
+              <div class="step-desc">Abrir la URL de Vercel. Debe mostrar la pantalla de login de la aplicación.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Registro de usuario funciona</div>
+              <div class="step-desc">Intentar registrar un nuevo usuario. Si funciona, el frontend está comunicándose correctamente con el backend y el backend con la BD.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Login funciona</div>
+              <div class="step-desc">Iniciar sesión con el usuario recién creado. Si funciona, el JWT y la autenticación están bien configurados.</div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <div class="step-title">Revisar consola del navegador</div>
+              <div class="step-desc">Presionar F12 → pestaña Console. No debe haber errores de CORS ni de conexión rechazada. Si los hay, revisar la sección de errores comunes.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- ERRORES -->
+      <div class="section" id="errores">
+        <div class="section-num"><div class="n">12</div><span class="label">Troubleshooting</span></div>
+        <h2>Errores comunes y soluciones</h2>
+
+        <div class="card" style="border-left: 4px solid var(--red); margin-bottom:16px;">
+          <h4 style="color:var(--red);">❌ ERR_CONNECTION_REFUSED — localhost:5000</h4>
+          <p style="font-size:14px; color:#44403c; margin-top:8px; line-height:1.7;"><strong>Causa:</strong> El archivo <code>api.js</code> del frontend tiene la URL hardcodeada como localhost y no se hizo el cambio a variable de entorno.<br><strong>Solución:</strong> Hacer el cambio en <code>api.js</code>, commit, push y redeploy en Vercel.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--red); margin-bottom:16px;">
+          <h4 style="color:var(--red);">❌ CORS Policy Error</h4>
+          <p style="font-size:14px; color:#44403c; margin-top:8px; line-height:1.7;"><strong>Causa:</strong> La variable <code>CORS_ORIGIN</code> en el backend no tiene la URL correcta de Vercel, o tiene la URL vieja.<br><strong>Solución:</strong> Actualizar <code>CORS_ORIGIN</code> en Railway con la URL exacta de Vercel y esperar el redeploy.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--red); margin-bottom:16px;">
+          <h4 style="color:var(--red);">❌ Error 500 — Table doesn't exist</h4>
+          <p style="font-size:14px; color:#44403c; margin-top:8px; line-height:1.7;"><strong>Causa:</strong> Las tablas no fueron creadas en la base de datos de Railway.<br><strong>Solución:</strong> Reconectarse con TablePlus y ejecutar el schema nuevamente. Verificar que las tablas aparezcan en el panel izquierdo.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--red); margin-bottom:16px;">
+          <h4 style="color:var(--red);">❌ ENOTFOUND MYSQLHOST</h4>
+          <p style="font-size:14px; color:#44403c; margin-top:8px; line-height:1.7;"><strong>Causa:</strong> La variable <code>DB_HOST</code> tiene el texto literal "MYSQLHOST" en lugar de una referencia al servicio MySQL de Railway.<br><strong>Solución:</strong> En Railway → Variables → editar DB_HOST → usar el ícono {} → seleccionar <code>${{MySQL.MYSQLHOST}}</code>.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--red); margin-bottom:16px;">
+          <h4 style="color:var(--red);">❌ Lost connection to MySQL en TablePlus</h4>
+          <p style="font-size:14px; color:#44403c; margin-top:8px; line-height:1.7;"><strong>Causa:</strong> Puerto o contraseña incorrectos, o el servicio MySQL aún está iniciando.<br><strong>Solución:</strong> Verificar el puerto en <code>MYSQL_PUBLIC_URL</code> (no es el 3306 por defecto). Esperar 2 minutos si el servicio es nuevo. Probar cambiando SSL mode a DISABLED.</p>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--red);">
+          <h4 style="color:var(--red);">❌ Error creating build plan with Railpack</h4>
+          <p style="font-size:14px; color:#44403c; margin-top:8px; line-height:1.7;"><strong>Causa:</strong> El Root Directory no está configurado o apunta a una carpeta que no tiene <code>package.json</code>.<br><strong>Solución:</strong> Verificar la estructura del repo en GitHub y configurar correctamente el Root Directory en Settings del servicio.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('.section');
+  const links = document.querySelectorAll('.nav-group a');
+  window.addEventListener('scroll', () => {
+    let cur = '';
+    sections.forEach(s => { if(window.scrollY >= s.offsetTop - 80) cur = s.id; });
+    links.forEach(a => {
+      a.classList.remove('active');
+      if(a.getAttribute('href') === '#' + cur) a.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
