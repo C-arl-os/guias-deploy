@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulacro – Procesos, Concurrencia & Kubernetes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #1a2236;
+    --border: #2a3a5c;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-val { font-size: 1.2rem; font-weight: 700; color: var(--accent2); }
+  .stat-lbl { color: var(--muted); font-size: 0.65rem; text-transform: uppercase; }
+
+  /* PROGRESS */
+  .progress-wrap {
+    background: var(--surface);
+    padding: 10px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-track {
+    background: var(--border);
+    border-radius: 999px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* TOPIC BADGE */
+  .topic-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+  }
+
+  /* QUESTION CARD */
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+    transition: border-color 0.3s;
+  }
+  .q-card.answered-correct { border-color: var(--green); }
+  .q-card.answered-wrong { border-color: var(--red); }
+
+  .q-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .q-text {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .q-type-badge {
+    font-size: 0.65rem;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-weight: 400;
+  }
+  .badge-vf { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .badge-om { background: rgba(6,182,212,0.15); color: var(--accent2); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: #a5f3fc;
+    margin-bottom: 18px;
+    overflow-x: auto;
+    line-height: 1.7;
+    white-space: pre;
+  }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt-btn {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .opt-btn:hover:not(:disabled) {
+    background: rgba(59,130,246,0.1);
+    border-color: var(--accent);
+  }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct {
+    background: rgba(16,185,129,0.12);
+    border-color: var(--green);
+    color: #6ee7b7;
+  }
+  .opt-btn.wrong {
+    background: rgba(239,68,68,0.12);
+    border-color: var(--red);
+    color: #fca5a5;
+  }
+  .opt-key {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    background: var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    min-width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* EXPLANATION */
+  .explanation {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    display: none;
+  }
+  .explanation.show { display: block; }
+  .explanation.correct-exp {
+    background: rgba(16,185,129,0.08);
+    border-left: 3px solid var(--green);
+    color: #a7f3d0;
+  }
+  .explanation.wrong-exp {
+    background: rgba(239,68,68,0.08);
+    border-left: 3px solid var(--red);
+    color: #fecaca;
+  }
+
+  /* RESULTS */
+  #results-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 6px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    background: rgba(59,130,246,0.08);
+  }
+  .score-num { font-size: 2.8rem; font-weight: 800; color: var(--accent2); font-family: var(--mono); }
+  .score-den { font-size: 1rem; color: var(--muted); font-family: var(--mono); }
+  .score-pct { font-size: 1rem; color: var(--text); margin-bottom: 8px; }
+  .score-msg { font-size: 1.4rem; font-weight: 700; margin-bottom: 16px; }
+  .topic-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    max-width: 600px;
+    margin: 24px auto;
+    text-align: left;
+  }
+  .tb-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .tb-topic { font-size: 0.75rem; color: var(--muted); font-family: var(--mono); text-transform: uppercase; }
+  .tb-score { font-size: 1.1rem; font-weight: 700; margin-top: 4px; }
+  .btn-restart {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    padding: 14px 32px;
+    color: white;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 24px;
+    transition: opacity 0.2s;
+  }
+  .btn-restart:hover { opacity: 0.85; }
+
+  /* FILTER NAV */
+  .filter-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: rgba(59,130,246,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* SHUFFLE */
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .ctrl-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    color: white;
+    font-weight: 700;
+  }
+  .ctrl-btn.primary:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 Simulacro · SO2 Unidad 2</h1>
+  <div class="stats-bar">
+    <div class="stat"><span class="stat-val" id="stat-correct">0</span><span class="stat-lbl">Correctas</span></div>
+    <div class="stat"><span class="stat-val" id="stat-wrong">0</span><span class="stat-lbl">Incorrectas</span></div>
+    <div class="stat"><span class="stat-val" id="stat-remain">120</span><span class="stat-lbl">Restantes</span></div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="progress-label" id="progress-label">0 / 120 respondidas</div>
+</div>
+
+<main>
+  <div class="controls">
+    <button class="ctrl-btn primary" onclick="shuffleQuestions()">🔀 Mezclar preguntas</button>
+    <button class="ctrl-btn" onclick="showAll()">📋 Ver todas</button>
+    <button class="ctrl-btn" onclick="showWrong()">❌ Solo incorrectas</button>
+    <button class="ctrl-btn" onclick="resetAll()">↺ Reiniciar</button>
+  </div>
+
+  <div class="filter-nav" id="filter-nav">
+    <button class="filter-btn active" onclick="filterTopic('all', this)">Todas</button>
+    <button class="filter-btn" onclick="filterTopic('procesos', this)">Procesos</button>
+    <button class="filter-btn" onclick="filterTopic('concurrencia', this)">Concurrencia</button>
+    <button class="filter-btn" onclick="filterTopic('hilos', this)">Hilos</button>
+    <button class="filter-btn" onclick="filterTopic('ipc', this)">IPC</button>
+    <button class="filter-btn" onclick="filterTopic('algoritmos', this)">Algoritmos</button>
+    <button class="filter-btn" onclick="filterTopic('kubernetes', this)">Kubernetes</button>
+  </div>
+
+  <div id="quiz-container"></div>
+  <div id="results-screen">
+    <div class="score-circle">
+      <div class="score-num" id="res-num">0</div>
+      <div class="score-den" id="res-den">/120</div>
+    </div>
+    <div class="score-pct" id="res-pct"></div>
+    <div class="score-msg" id="res-msg"></div>
+    <div class="topic-breakdown" id="res-breakdown"></div>
+    <button class="btn-restart" onclick="resetAll()">🔁 Intentar de nuevo</button>
+  </div>
+</main>
+
+<script>
+const ALL_QUESTIONS = [
+  // ═══════════════════ PROCESOS (30) ═══════════════════
+  {topic:'procesos',type:'vf',q:'Un proceso es simplemente el código fuente de un programa almacenado en disco.',correct:'F',exp:'Un proceso es un programa <b>en ejecución</b>. El código en disco es solo el ejecutable; el proceso incluye también heap, stack, data, y contexto de ejecución.'},
+  {topic:'procesos',type:'vf',q:'El PCB (Process Control Block) almacena información como el PID, nombre, prioridad y estado del proceso.',correct:'V',exp:'El PCB es la estructura que el SO usa para manejar el ciclo de vida del proceso y contiene exactamente esos campos.'},
+  {topic:'procesos',type:'vf',q:'En el ciclo de vida de un proceso, el estado "Waiting" ocurre cuando el scheduler no encuentra CPU disponible.',correct:'F',exp:'"Waiting" ocurre cuando el proceso necesita acceder a hardware (I/O) usando interrupciones. La falta de CPU llevaría al proceso a permanecer en "Ready".'},
+  {topic:'procesos',type:'vf',q:'Un proceso zombie es aquel que ya terminó pero aún aparece en la tabla de procesos del SO.',correct:'V',exp:'Al finalizar, se libera memoria pero algunos procesos no borran su info de la tabla — quedan "muertos en memoria pero vivos en la tabla".'},
+  {topic:'procesos',type:'vf',q:'El comando <code>kill -9 PID</code> pide cortésmente al proceso que termine.',correct:'F',exp:'<code>kill -9</code> fuerza la terminación inmediata (SIGKILL). <code>kill PID</code> envía SIGTERM, que es la señal "cortés".'},
+  {topic:'procesos',type:'vf',q:'En GNU/Linux, la información de cada proceso se encuentra en la carpeta /proc, con una subcarpeta por PID.',correct:'V',exp:'El kernel monolítico de Linux expone los procesos en /proc/[PID], lo que permite ver su info sin necesidad de syscalls adicionales.'},
+  {topic:'procesos',type:'vf',q:'El scheduler de tipo Short-term mueve procesos de la memoria virtual al estado Ready.',correct:'F',exp:'El Short-term scheduler lleva procesos de Ready a Running (los ejecuta en CPU). El Medium-term mueve de RAM a disco (memoria virtual).'},
+  {topic:'procesos',type:'vf',q:'Round Robin es una disciplina de scheduler que garantiza que el proceso con menor tiempo restante siempre se ejecuta primero.',correct:'F',exp:'Round Robin hace procesamiento circular: cada proceso recibe un quantum de tiempo. "Shortest remaining time" es el que prioriza el menor tiempo restante.'},
+  {topic:'procesos',type:'vf',q:'El estado "Finalized" libera la memoria que usaba el proceso.',correct:'V',exp:'Cuando se cierra el programa pasa a Finalized, y ahí se libera la memoria utilizada por el proceso.'},
+  {topic:'procesos',type:'vf',q:'1 proceso = 1 hilo siempre, por definición del modelo de procesos del SO.',correct:'V',exp:'Según los apuntes, 1 proceso = 1 hilo es la definición base. Cuando hay múltiples hilos, el proceso segmenta su memoria para soportar varios flujos.'},
+  {topic:'procesos',type:'om',q:'¿Cuál es la función del scheduler de tipo Long-term?',opts:['Mover procesos de Ready a Running','Mover procesos de RAM a memoria virtual','Mover procesos en Ready a memoria RAM para ejecución','Matar procesos zombie'],correct:2,exp:'Long-term scheduler: los procesos en estado Ready pasan a memoria (RAM), listos para ser ejecutados.'},
+  {topic:'procesos',type:'om',q:'¿Qué secciones de memoria se crean cuando nace un nuevo proceso (estado New)?',opts:['Solo Stack y Heap','Code, Data, Stack y Heap','Solo Text y Data','Register, Cache, Stack'],correct:1,exp:'Al crearse un proceso se asigna: Heap (datos dinámicos), Stack (llamadas), Data (variables globales) y Text (código).'},
+  {topic:'procesos',type:'om',q:'¿Qué comando de Linux lista todos los procesos con su información?',opts:['top','kill -9','ps -aux','killall nombre'],correct:2,exp:'<code>ps -aux</code> lista todos los procesos e información. <code>top</code> los monitorea en tiempo real pero no los "lista" en el mismo sentido.'},
+  {topic:'procesos',type:'om',q:'¿Desde qué estado puede ir un proceso directamente al estado Waiting?',opts:['New','Ready','Running','Finalized'],correct:2,exp:'El proceso pasa a Waiting desde Running, cuando necesita I/O. Después de que termina el I/O, regresa a Ready.'},
+  {topic:'procesos',type:'om',q:'¿Cuál de estas NO es una disciplina de scheduler mencionada en clase?',opts:['FIFO','Round Robin','Multilevel queue','Least Recently Used'],correct:3,exp:'LRU es un algoritmo de reemplazo de páginas, no una disciplina de scheduler. Las de scheduler son: FIFO, Shortest remaining time, Fixed Priority Pre-emptive, Round Robin, Multilevel queue.'},
+  {topic:'procesos',type:'om',q:'Un proceso está en estado Running. Solicita leer un archivo del disco. ¿A qué estado pasa?',opts:['New','Ready','Waiting','Finalized'],correct:2,exp:'Acceder al hardware (disco) lo manda a Waiting, donde espera la interrupción de I/O. Al completarse, regresa a Ready.'},
+  {topic:'procesos',type:'om',q:'¿Qué componente del SO controla directamente qué proceso pasa de Ready a Running?',opts:['El PCB','El kernel','El Scheduler','El proceso padre'],correct:2,exp:'El Scheduler (programador de tareas) encuentra una CPU disponible y ejecuta el proceso.'},
+  {topic:'procesos',type:'om',q:'¿Dónde se almacenan las variables locales de una función en un proceso?',opts:['Heap','Data','Text','Stack'],correct:3,exp:'Las variables locales y el call stack se almacenan en el Stack. El Heap es para memoria dinámica (malloc, new).'},
+  {topic:'procesos',type:'om',q:'¿Qué ocurre cuando se ejecuta <code>killall nombre</code>?',opts:['Mata un proceso por PID','Mata todos los procesos del sistema','Mata todos los procesos con ese nombre','Fuerza el cierre del kernel'],correct:2,exp:'<code>killall nombre</code> mata todos los procesos que tengan ese nombre. <code>kill PID</code> mata por PID específico.'},
+  {topic:'procesos',type:'vf',q:'El comando <code>top</code> en Linux permite monitorear procesos en tiempo real.',correct:'V',exp:'Así es, <code>top</code> es el monitor de procesos en tiempo real en GNU/Linux.'},
+  {topic:'procesos',type:'om',q:'¿Por qué se dice que un proceso zombie está "muerto en memoria pero vivo en la tabla"?',opts:['Porque consume toda la RAM','Porque su memoria fue liberada pero su entrada en la tabla de procesos permanece','Porque el scheduler lo sigue ejecutando','Porque está en estado Waiting indefinidamente'],correct:1,exp:'Al finalizar, la memoria se libera, pero algunos procesos no limpian su entrada en la tabla — por eso "viven" en ella aunque ya terminaron.'},
+  {topic:'procesos',type:'vf',q:'El estado "Ready" significa que el proceso ya se está ejecutando en la CPU.',correct:'F',exp:'Ready significa que el proceso está en cola, listo PARA ejecutarse, pero todavía no tiene CPU asignada. Running es cuando realmente se ejecuta.'},
+  {topic:'procesos',type:'om',q:'¿Cuál scheduler mueve procesos de RAM a memoria virtual (disco)?',opts:['Short-term','Long-term','Medium-term','Round Robin'],correct:2,exp:'Medium-term scheduler: mueve procesos de RAM a memoria virtual (swap/disco) cuando hay presión de memoria.'},
+  {topic:'procesos',type:'vf',q:'La sección "Text" de un proceso contiene el código compilado del programa.',correct:'V',exp:'Text (también llamado Code segment) contiene las instrucciones del programa compilado.'},
+  {topic:'procesos',type:'om',q:'¿Cuál es la diferencia entre Task y Hilo (Thread) según los apuntes?',opts:['Son exactamente lo mismo','Task crea recursos del proceso; Hilo es la unidad de ejecución usando CPU','Task ejecuta el proceso; Hilo reserva memoria','No hay diferencia, son sinónimos del kernel'],correct:1,exp:'Task: crear los recursos del proceso. Hilo (Thread): la unidad de flujo de procesamiento, o la ejecución del proceso usando CPU.'},
+  {topic:'procesos',type:'vf',q:'Fixed Priority Pre-emptive es una disciplina de scheduler que puede interrumpir un proceso en ejecución.',correct:'V',exp:'Pre-emptive significa que puede desalojar al proceso actual si llega uno de mayor prioridad.'},
+  {topic:'procesos',type:'om',q:'Según los apuntes, ¿cuál es la naturaleza del kernel de GNU/Linux que hace accesibles los comandos de administración de procesos?',opts:['Microkernel','Kernel modular','Kernel monolítico','Kernel híbrido'],correct:2,exp:'GNU/Linux usa un kernel monolítico, lo que hace que los comandos de administración de procesos sean parte del kernel.'},
+  {topic:'procesos',type:'vf',q:'Un proceso puede ir directamente del estado New al estado Running sin pasar por Ready.',correct:'F',exp:'El flujo correcto es New → Ready → Running. El scheduler elige del pool de procesos Ready cuál ejecutar.'},
+  {topic:'procesos',type:'om',q:'¿Qué contiene la sección "Data" de un proceso?',opts:['El código ejecutable','Las variables globales e inicializadas','El stack de llamadas','La memoria dinámica'],correct:1,exp:'Data contiene las variables globales e inicializadas estáticamente.'},
+  {topic:'procesos',type:'vf',q:'El scheduler Round Robin puede causar starvation si hay muchos procesos de alta prioridad.',correct:'F',exp:'Round Robin no tiene prioridades — todos reciben el mismo quantum de tiempo en orden circular, por lo que no causa starvation. La starvation ocurre en esquemas de prioridad fija.'},
+
+  // ═══════════════════ CONCURRENCIA & PARALELISMO (20) ═══════════════════
+  {topic:'concurrencia',type:'vf',q:'En concurrencia, los procesos se ejecutan exactamente al mismo tiempo en diferentes CPUs.',correct:'F',exp:'Concurrencia = procesos existen al mismo tiempo pero NO se ejecutan al mismo tiempo (CPU=1). Paralelismo = sí se ejecutan al mismo tiempo (CPU>1).'},
+  {topic:'concurrencia',type:'vf',q:'Paralelismo requiere más de 1 CPU (o núcleo) para lograrse.',correct:'V',exp:'Paralelismo requiere CPU > 1. Con una sola CPU solo puede haber concurrencia (ilusión de simultaneidad).'},
+  {topic:'concurrencia',type:'vf',q:'La monoprogramación permite ejecutar varios procesos alternándose en la CPU.',correct:'F',exp:'Monoprogramación ejecuta solo UN proceso a la vez. La multiprogramación es la que alterna procesos.'},
+  {topic:'concurrencia',type:'om',q:'Un sistema con 1 CPU que alterna la ejecución de múltiples procesos es ejemplo de:',opts:['Paralelismo','Concurrencia','Multiprocesamiento','Clustering'],correct:1,exp:'Con 1 CPU, los procesos existen al mismo tiempo pero solo uno corre a la vez — eso es concurrencia.'},
+  {topic:'concurrencia',type:'om',q:'¿Cuál de los siguientes es un ejemplo de concurrencia mencionado en clase?',opts:['Renderizar gráficos 3D en GPU','Cajeros automáticos','Compilar código fuente','Desfragmentar disco'],correct:1,exp:'Los ejemplos dados en clase son: bases de datos, cajeros automáticos, pedidos de comida, cajas de banco, supermercados.'},
+  {topic:'concurrencia',type:'vf',q:'1 CPU = 1 Core en la arquitectura actual de procesadores.',correct:'V',exp:'Según los apuntes: 1 CPU = 1 Core. Dentro de ese core puede haber hilos lógicos (HyperThreading en Intel, SMT en AMD).'},
+  {topic:'concurrencia',type:'om',q:'Intel HyperThreading y AMD SMT son tecnologías que permiten:',opts:['Tener más CPUs físicas','Que 1 core físico actúe como 2 CPUs lógicas','Que el kernel tenga más memoria','Eliminar la necesidad del scheduler'],correct:1,exp:'HyperThreading (Intel) y SMT (AMD) crean 2 hilos lógicos (vCPUs) por core físico, haciendo que el SO lo vea como 2 procesadores.'},
+  {topic:'concurrencia',type:'vf',q:'El scheduler en la actualidad usa principalmente multiprogramación para ejecutar procesos.',correct:'V',exp:'Actualmente la ejecución se hace realizando multiprogramación — el scheduler alterna procesos dependiendo de los CPUs disponibles.'},
+  {topic:'concurrencia',type:'om',q:'Si un sistema tiene 3 CPUs y 3 procesos corriendo simultáneamente uno en cada CPU, ¿cómo se llama esto?',opts:['Concurrencia','Monoprogramación','Paralelismo','Multitarea cooperativa'],correct:2,exp:'Cuando los procesos se ejecutan AL MISMO TIEMPO en diferentes CPUs (CPU>1), es paralelismo.'},
+  {topic:'concurrencia',type:'om',q:'¿Cuál modelo de algoritmos paralelos divide los datos entre varios procesadores que producen salidas independientes?',opts:['Pipeline','Master-Slave','Data Parallel','Task Graph'],correct:2,exp:'Data Parallel: los datos (D) se dividen entre procesadores (P) que generan salidas (O) independientes.'},
+  {topic:'concurrencia',type:'om',q:'En el modelo Pipeline de algoritmos paralelos, ¿qué elemento conecta las etapas de procesamiento?',opts:['Un Master','Una Cola de mensajes','Un Buffer','Un Semáforo'],correct:2,exp:'El Pipeline usa: Cola Input → Procesador → Buffer → Procesador → Buffer → Cola Output.'},
+  {topic:'concurrencia',type:'om',q:'¿Qué modelo de algoritmo paralelo usa un nodo central que coordina múltiples workers?',opts:['Data Parallel','Task Graph','Pipeline','Master-Slave'],correct:3,exp:'Master-Slave: hay un nodo M (master) que distribuye trabajo a nodos W (workers).'},
+  {topic:'concurrencia',type:'vf',q:'En el modelo Workpool, los procesadores toman tareas de una cola de entrada y depositan resultados en una cola de salida.',correct:'V',exp:'El Workpool tiene: Cola Input → pool de procesadores → Cola Output. Los procesadores toman trabajo de la cola y depositan resultados.'},
+  {topic:'concurrencia',type:'vf',q:'Un algoritmo paralelo es simplemente un programa que usa varios hilos.',correct:'F',exp:'Un algoritmo paralelo es una secuencia de instrucciones que se ejecuta en DIFERENTES DISPOSITIVOS para calcular y procesar datos y luego unir los resultados correctamente. Va más allá de solo usar hilos.'},
+  {topic:'concurrencia',type:'om',q:'¿Cuál es la función de un Balanceador de Carga (LB) en un sistema con múltiples réplicas?',opts:['Aumentar la velocidad de cada worker','Repartir las peticiones de usuarios entre las réplicas','Crear nuevos procesos automáticamente','Eliminar procesos zombie'],correct:1,exp:'El LB recibe peticiones de múltiples usuarios y las distribuye entre las réplicas (workers) para no sobrecargar ninguna.'},
+  {topic:'concurrencia',type:'om',q:'En el modelo Task Graph, ¿cómo se relacionan las tareas entre sí?',opts:['Son completamente independientes','Se ejecutan en secuencia estricta','Tienen dependencias representadas como un grafo','Todas esperan al Master'],correct:2,exp:'Task Graph: las tareas P están conectadas en un grafo que representa sus dependencias, con entradas D y salidas O.'},
+  {topic:'concurrencia',type:'vf',q:'La diferencia principal entre monoprogramación y multiprogramación es que en multiprogramación varios procesos se alternan en la CPU.',correct:'V',exp:'Exacto: multiprogramación alterna (Δt) la ejecución de los procesos, creando la ilusión de simultaneidad.'},
+  {topic:'concurrencia',type:'om',q:'¿Cuál de estas afirmaciones sobre vCPU es correcta?',opts:['1 vCPU = 1 CPU física siempre','1 core físico con HyperThreading = 2 vCPUs lógicas','vCPU es solo un concepto de virtualización sin relación con el hardware','vCPU equivale a 1 GPU'],correct:1,exp:'Con HyperThreading (Intel) o SMT (AMD), 1 core físico + lógico = 2 hilos = 2 vCPUs lógicas.'},
+  {topic:'concurrencia',type:'vf',q:'El scheduler puede usar tanto concurrencia como paralelismo dependiendo de los CPUs disponibles.',correct:'V',exp:'Sí, el scheduler se encarga de la ejecución usando concurrencia o paralelismo dependiendo de los CPUs disponibles.'},
+  {topic:'concurrencia',type:'om',q:'¿Cuál NO es un ejemplo de sistema con concurrencia mencionado en clase?',opts:['Bases de datos','Supermercados caja de pago','Monitor de pantalla','Pedidos de comida'],correct:2,exp:'Los ejemplos dados son: Bases de Datos, Cajeros automáticos, Pedidos de comida, Cajas de banco, Supermercados. "Monitor de pantalla" no está en la lista.'},
+
+  // ═══════════════════ HILOS / THREADS (15) ═══════════════════
+  {topic:'hilos',type:'vf',q:'Crear un hilo consume menos recursos de CPU que crear un nuevo proceso.',correct:'V',exp:'Consume menos CPU crear hilos que crear nuevos procesos, porque los hilos comparten el espacio de memoria del proceso.'},
+  {topic:'hilos',type:'vf',q:'En un proceso con múltiples hilos, cada hilo tiene su propia sección de Heap independiente.',correct:'F',exp:'En Multi Thread, los hilos comparten el Heap. Cada hilo tiene su propio Stack, pero el Heap es compartido.'},
+  {topic:'hilos',type:'om',q:'¿Qué modelo de hilos usa 1 hilo de usuario por cada hilo de kernel?',opts:['Muchos a uno','Uno a uno','Muchos a muchos','Dinámico a dinámico'],correct:1,exp:'Uno a uno: cada hilo de usuario tiene su propio hilo de kernel. Windows y Linux antiguos lo usaron.'},
+  {topic:'hilos',type:'om',q:'¿Qué modelo de hilos crea los hilos de kernel necesarios dinámicamente?',opts:['Muchos a uno','Uno a uno','Muchos a muchos','Estático a uno'],correct:2,exp:'Muchos a muchos: concurrencia dinámica — se crean los hilos de kernel necesarios según demanda.'},
+  {topic:'hilos',type:'vf',q:'El modelo "Muchos a uno" tiene concurrencia con 1 hilo de kernel para todos los hilos de usuario.',correct:'V',exp:'Muchos a uno: todos los hilos de usuario (muchos S) comparten 1 hilo de kernel (k). Hay un solo punto de ejecución.'},
+  {topic:'hilos',type:'om',q:'¿Qué es una Task en el contexto de procesos e hilos?',opts:['Un hilo de kernel','La existencia del proceso en memoria','El scheduler del SO','Un semáforo del sistema'],correct:1,exp:'Task = existencia del proceso en memoria. Hilo (Thread) = ejecución del proceso o unidad de flujo de procesamiento.'},
+  {topic:'hilos',type:'vf',q:'Para usar múltiples hilos, el proceso segmenta su memoria y registros para soportar varios flujos de ejecución.',correct:'V',exp:'Exactamente — para hilos múltiples, el proceso divide su memoria (múltiples stacks, heaps) para soportar varios flujos simultáneos.'},
+  {topic:'hilos',type:'om',q:'En un proceso con 2 hilos, ¿cuántas secciones Text (código) existen?',opts:['1','2','Depende del SO','4'],correct:0,exp:'Aunque hay 2 hilos con sus propios Stack y registros, el código (Text) es compartido — solo hay 1 sección Text.'},
+  {topic:'hilos',type:'om',q:'¿Cuál modelo de hilos usaban Windows y Linux antiguos?',opts:['Muchos a uno','Uno a uno','Muchos a muchos','Ninguno de los anteriores'],correct:1,exp:'El modelo Uno a uno (1 hilo usuario = 1 hilo kernel) era el usado por Windows y Linux en versiones antiguas.'},
+  {topic:'hilos',type:'vf',q:'Un hilo (Thread) es la unidad mínima de planificación del scheduler.',correct:'V',exp:'El hilo es la unidad de flujo de procesamiento — el scheduler planifica hilos para asignarles CPU.'},
+  {topic:'hilos',type:'om',q:'¿Qué tiene de diferente un proceso con múltiples hilos comparado con uno de un solo hilo en cuanto a memoria?',opts:['Usa menos memoria total','Tiene múltiples secciones de Stack y Heap pero comparte Text y Data','Tiene una sola sección de Stack compartida','No hay diferencia en memoria'],correct:1,exp:'En Multi Thread, cada hilo tiene su propio Stack y Heap, pero comparten la misma sección Text (código) y Data.'},
+  {topic:'hilos',type:'vf',q:'El modelo "Uno a uno" permite verdadero paralelismo en sistemas multinúcleo.',correct:'V',exp:'Sí — como cada hilo de usuario tiene su propio hilo de kernel, pueden correr en diferentes CPUs simultáneamente.'},
+  {topic:'hilos',type:'om',q:'¿Cuál es la ventaja de crear hilos en vez de procesos nuevos?',opts:['Los hilos tienen más seguridad','Los hilos consumen menos CPU para crearse','Los hilos pueden acceder a más memoria','Los hilos tienen mayor prioridad'],correct:1,exp:'Según los apuntes: "Consume menos CPU crear hilos que crear nuevos procesos."'},
+  {topic:'hilos',type:'vf',q:'En el modelo Muchos a muchos, la cantidad de hilos de kernel es fija y predeterminada.',correct:'F',exp:'En Muchos a muchos hay concurrencia DINÁMICA — se crean los hilos de kernel necesarios según la demanda.'},
+  {topic:'hilos',type:'om',q:'¿Cuál sección de memoria NO es independiente entre hilos de un mismo proceso?',opts:['Stack','Registros','Heap','Program Counter'],correct:2,exp:'El Heap es compartido entre hilos del mismo proceso. Cada hilo sí tiene su propio Stack, registros y Program Counter.'},
+
+  // ═══════════════════ IPC (20) ═══════════════════
+  {topic:'ipc',type:'vf',q:'La Exclusión Mutua garantiza que solo un proceso acceda a un recurso compartido a la vez.',correct:'V',exp:'Exclusión Mutua es la estrategia para sincronizar el acceso y uso de un recurso — solo uno a la vez.'},
+  {topic:'ipc',type:'vf',q:'La Región Crítica y la Sección Crítica son exactamente lo mismo.',correct:'F',exp:'Región Crítica: conjunto de instrucciones para acceder a un recurso. Sección Crítica: LA instrucción específica que accede al recurso. La sección está DENTRO de la región.'},
+  {topic:'ipc',type:'om',q:'¿Cuál de estas condiciones NO es necesaria para que ocurra un Interbloqueo?',opts:['Exclusión mutua','Contención o retención y espera','Inapropiatividad','Checkpoint y rollback'],correct:3,exp:'Las 4 condiciones del interbloqueo son: Exclusión mutua, Contención/retención y espera, Inapropiatividad, Espera circular. Checkpoint/rollback es una técnica para resolverlo, no una condición.'},
+  {topic:'ipc',type:'om',q:'Un semáforo binario tiene valores:',opts:['0 a N','0 y 1 solamente','1 a infinito','Negativo a positivo'],correct:1,exp:'Semáforos binarios: valores 0 (esperar) y 1 (acceder). Semáforos contadores: > 1 para múltiples instancias.'},
+  {topic:'ipc',type:'vf',q:'Los Sockets permiten comunicación entre procesos en diferentes computadoras a través de la red.',correct:'V',exp:'Sockets (RPC/gRPC): comunicación en red, no comparten memoria ni reloj, y son sistemas difícilmente acoplados.'},
+  {topic:'ipc',type:'om',q:'¿Qué mecanismo de IPC usa una llave (ID) para acceder a un buzón de mensajes?',opts:['Memoria compartida','Semáforos','Cola de mensajes','Sockets'],correct:2,exp:'Cola de mensajes: el usuario abre un buzón con una llave ID (ej. ID=3) y envía mensajes a ese buzón.'},
+  {topic:'ipc',type:'vf',q:'La Memoria Compartida es una comunicación interna que requiere que los procesos estén en la misma computadora.',correct:'V',exp:'Memoria compartida: comunicación interna, comparten memoria y reloj, y son sistemas estrechamente acoplados.'},
+  {topic:'ipc',type:'om',q:'La Espera Circular en el interbloqueo significa que:',opts:['Los procesos esperan por siempre sin razón','Todos los procesos dependen del siguiente para liberar su recurso','El CPU entra en un loop infinito','Los semáforos se anulan entre sí'],correct:1,exp:'Espera circular: todos los procesos dependen de que el siguiente libere su recurso, formando un ciclo sin salida.'},
+  {topic:'ipc',type:'vf',q:'Los Pipes y FIFOs son mecanismos alternativos de comunicación entre procesos además de los 4 clásicos.',correct:'V',exp:'Según los apuntes: "Otros mecanismos: Pipes y FIFOs" — son adicionales a Memoria Compartida, Cola de Mensajes, Semáforos y Sockets.'},
+  {topic:'ipc',type:'om',q:'¿Cuál es la diferencia principal entre Memoria Compartida y Sockets?',opts:['Los sockets son más rápidos siempre','Memoria compartida es para procesos en la misma PC; sockets para comunicación en red','Los sockets no usan puertos','No hay diferencia práctica'],correct:1,exp:'Memoria compartida: misma PC, comparten memoria/reloj, estrechamente acoplados. Sockets: comunicación en red, sin memoria compartida, difícilmente acoplados.'},
+  {topic:'ipc',type:'vf',q:'Un semáforo contador puede tener valores mayores a 1 para controlar el acceso a múltiples instancias de un recurso.',correct:'V',exp:'Semáforos contadores > 1 permiten que N procesos accedan simultáneamente a N instancias del recurso.'},
+  {topic:'ipc',type:'om',q:'¿Qué condición del interbloqueo significa que un proceso retiene un recurso mientras espera otro?',opts:['Exclusión mutua','Inapropiatividad','Contención o retención y espera','Espera circular'],correct:2,exp:'Contención o retención y espera: el proceso obtiene un recurso y mientras lo retiene, espera obtener otro.'},
+  {topic:'ipc',type:'vf',q:'El interbloqueo se da principalmente por la implementación de la exclusión mutua.',correct:'V',exp:'Así lo indica el apunte: "El interbloqueo se da a causa de la implementación de la exclusión mutua."'},
+  {topic:'ipc',type:'om',q:'¿Qué valor de semáforo indica que el recurso está disponible para acceder?',opts:['0','1','N','-1'],correct:1,exp:'0 = Esperar. 1 = Acceder (recurso disponible). N = múltiples recursos disponibles.'},
+  {topic:'ipc',type:'om',q:'¿Qué permite implementar la Región Crítica?',opts:['Aumentar la velocidad del proceso','Un mecanismo de acceso controlado a recursos','Eliminar el interbloqueo automáticamente','Copiar memoria entre procesos'],correct:1,exp:'"La región crítica permite implementar un mecanismo de acceso a recursos."'},
+  {topic:'ipc',type:'vf',q:'La Inapropiatividad en el interbloqueo significa que el SO puede quitarle el recurso a un proceso en cualquier momento.',correct:'F',exp:'Inapropiatividad significa lo CONTRARIO: el proceso pide más recursos y SOLO ÉL PUEDE liberarlos. El SO no puede quitárselos.'},
+  {topic:'ipc',type:'om',q:'¿Cuál mecanismo de IPC usa un puerto (como el puerto 80) para la comunicación?',opts:['Memoria compartida','Cola de mensajes','Semáforos','Sockets'],correct:3,exp:'Sockets usan puertos — el diagrama muestra un servidor en Puerto 80 comunicándose con usuarios.'},
+  {topic:'ipc',type:'vf',q:'Los procesos siempre necesitan comunicarse entre sí para controlar el acceso a recursos compartidos.',correct:'V',exp:'"Los procesos se necesitan comunicar entre ellos para poder llevar un control sobre el acceso a los recursos."'},
+  {topic:'ipc',type:'om',q:'¿Cuántas condiciones deben cumplirse SIMULTÁNEAMENTE para que ocurra un interbloqueo?',opts:['1','2','3','4'],correct:3,exp:'Deben cumplirse las 4 condiciones: Exclusión mutua + Contención/retención + Inapropiatividad + Espera circular.'},
+  {topic:'ipc',type:'vf',q:'En una Cola de Mensajes, el mensaje se destruye después de ser entregado al receptor.',correct:'V',exp:'El diagrama muestra que el mensaje va al Buzón ID=3 y sale como "Mensaje Destruido" al ser consumido.'},
+
+  // ═══════════════════ ALGORITMOS DE CONCURRENCIA (10) ═══════════════════
+  {topic:'algoritmos',type:'vf',q:'En el patrón Productor-Consumidor, el productor saca datos de la cola y el consumidor los inserta.',correct:'F',exp:'Es al revés: el PRODUCTOR inserta datos en la cola y el CONSUMIDOR los saca y usa.'},
+  {topic:'algoritmos',type:'om',q:'¿Cuál algoritmo de concurrencia permite que varios lean al mismo tiempo pero solo uno escriba?',opts:['Productor-Consumidor','Lectores-Escritores','Publisher-Subscriber','Broker'],correct:1,exp:'Lectores-Escritores: varios lectores pueden leer simultáneamente, pero solo 1 escritor puede escribir a la vez.'},
+  {topic:'algoritmos',type:'vf',q:'Un Broker recibe y envía mensajes usando una cola de mensajes que consumen las aplicaciones.',correct:'V',exp:'"Un Broker recibe y envía mensajes para comunicar sistemas y servicios intercambiando información, y usa una cola de mensajes que consumen aplicaciones y procesan su información."'},
+  {topic:'algoritmos',type:'om',q:'¿En qué patrón los subscribers reciben mensajes solo si están suscritos al grupo?',opts:['Productor-Consumidor','Lectores-Escritores','Publisher-Subscriber','Master-Slave'],correct:2,exp:'Publisher-Subscriber: el Publisher (P) envía mensajes a un Subscriber Group, y los Subscribers (S) solo reciben si están suscritos.'},
+  {topic:'algoritmos',type:'om',q:'Redis Pub/Sub, RabbitMQ y Kafka son ejemplos de software de:',opts:['Scheduler de procesos','Broker de mensajes','Algoritmos de Dekker','Semáforos del kernel'],correct:1,exp:'Son ejemplos de Brokers / sistemas de mensajería que implementan el patrón Productor-Consumidor o Pub/Sub.'},
+  {topic:'algoritmos',type:'vf',q:'Los algoritmos de Dekker y Peterson son usados para controlar el acceso a recursos de la computadora.',correct:'V',exp:'Según los apuntes: "Algoritmos usados para recursos de la computadora: Algoritmos de Dekker, Algoritmo de Peterson."'},
+  {topic:'algoritmos',type:'om',q:'¿Cuál de estos es un algoritmo CLÁSICO de concurrencia mencionado en clase?',opts:['Bubble Sort de procesos','Filósofos comensales','Round Robin de I/O','Algoritmo de Dijkstra de CPUs'],correct:1,exp:'Algoritmos clásicos de concurrencia: Filósofos comensales, El barbero dormilón, Panadería de Lamport, Fumadores de cigarros.'},
+  {topic:'algoritmos',type:'vf',q:'El Broker está basado en el patrón Productor-Consumidor.',correct:'V',exp:'"El Broker está basado en el productor consumidor" — usa una cola de mensajes igual que ese patrón.'},
+  {topic:'algoritmos',type:'om',q:'¿Por qué muchos mecanismos de comunicación entre procesos se usan en sistemas distribuidos?',opts:['Porque son más lentos','Porque permiten coordinar procesos en múltiples máquinas','Porque no requieren red','Porque eliminan la necesidad de SO'],correct:1,exp:'Los apuntes indican que "muchos de estos mecanismos de comunicación se usan en sistemas distribuidos" porque permiten coordinar procesos en diferentes máquinas.'},
+  {topic:'algoritmos',type:'vf',q:'En el patrón Publisher-Subscriber, el Publisher conoce directamente a cada Subscriber.',correct:'F',exp:'El Publisher envía a un grupo (Subscriber Group) sin conocer individualmente a cada suscriptor. Los Subscribers deciden suscribirse al grupo.'},
+
+  // ═══════════════════ KUBERNETES (25) ═══════════════════
+  {topic:'kubernetes',type:'vf',q:'Kubernetes fue originalmente creado por Google con el nombre de "Borg".',correct:'V',exp:'"Anteriormente fue llamado Borg y era un proyecto de Google el cual fue liberado como open source."'},
+  {topic:'kubernetes',type:'vf',q:'Un Pod en Kubernetes puede contener solo un único container.',correct:'F',exp:'Un Pod puede contener VARIOS containers agrupados. Por eso un Pod agrupa containers relacionados.'},
+  {topic:'kubernetes',type:'om',q:'¿Cuál objeto de Kubernetes mantiene réplicas del container y además es versionable (permite rollback)?',opts:['ReplicaSet','Deployment','DaemonSet','Pod'],correct:1,exp:'Deployment: mantiene varias copias Y es versionable (permite hacer rollback). ReplicaSet: mantiene copias pero NO es versionable.'},
+  {topic:'kubernetes',type:'om',q:'¿Qué tipo de Service expone el deployment solo dentro del clúster (sin acceso externo)?',opts:['NodePort','LoadBalancer','ClusterIP','Ingress'],correct:2,exp:'ClusterIP: crea un DNS interno accesible solo dentro del clúster. Es el tipo de service por defecto.'},
+  {topic:'kubernetes',type:'vf',q:'Un DaemonSet garantiza que un Pod corra en TODOS los nodos del clúster.',correct:'V',exp:'"DaemonSet: Un pod que corre en todos los nodos del cluster."'},
+  {topic:'kubernetes',type:'om',q:'¿Qué componente del Control Plane almacena el estado del clúster en formato clave-valor?',opts:['kube-scheduler','kube-api-server','etcd','kubelet'],correct:2,exp:'etcd es la base de datos distribuida clave-valor que almacena todo el estado del clúster de Kubernetes.'},
+  {topic:'kubernetes',type:'om',q:'¿Cuál de estos comandos kubectl lista todos los pods en el namespace por defecto?',opts:['kubectl describe pods','kubectl get pods','kubectl apply pods','kubectl run pods'],correct:1,exp:'"kubectl get pods" lista todos los pods en el namespace default.'},
+  {topic:'kubernetes',type:'vf',q:'kubectl es el cliente de línea de comandos que se usa para interactuar con el clúster.',correct:'V',exp:'Sí — kubectl es el cliente que envía comandos al kube-api-server para controlar el clúster.'},
+  {topic:'kubernetes',type:'om',q:'¿Qué hace el comando <code>kubectl scale --replicas=3 deployment/app1</code>?',opts:['Crea 3 nuevos clústeres','Cambia la cantidad de réplicas del deployment a 3','Elimina 3 pods del deployment','Reinicia el deployment 3 veces'],correct:1,exp:'kubectl scale cambia la cantidad de réplicas del deployment especificado.'},
+  {topic:'kubernetes',type:'vf',q:'Un Secret en Kubernetes es simplemente un ConfigMap sin encriptación.',correct:'F',exp:'Secret: configuraciones de información sensible, es un ConfigMap ENCRIPTADO. No son equivalentes en seguridad.'},
+  {topic:'kubernetes',type:'om',q:'¿Qué objeto de Kubernetes expone un Service a través de un LoadBalancer capa 7?',opts:['Service LoadBalancer','NodePort','Ingress','ClusterIP'],correct:2,exp:'"Ingress: Una forma de exponer un servicio por un LoadBalancer capa 7."'},
+  {topic:'kubernetes',type:'om',q:'¿Cuál namespace de Kubernetes NO es un namespace por defecto del sistema?',opts:['default','kube-system','kube-public','mi-app-namespace'],correct:3,exp:'Los namespaces por defecto son: default, kube-public, kube-system. "mi-app-namespace" es un namespace personalizado.'},
+  {topic:'kubernetes',type:'vf',q:'El kubelet corre tanto en el Master Node como en los Worker Nodes.',correct:'V',exp:'En la lista del workshop: Master Node incluye kubelet, y Worker Nodes también incluyen kubelet.'},
+  {topic:'kubernetes',type:'om',q:'Analiza este comando: <code>kubectl expose deployment app1 --port=80 --target-port=80 --type=NodePort</code>. ¿Qué hace?',opts:['Crea un deployment llamado app1','Expone app1 externamente por un puerto del nodo','Crea un pod nginx en el puerto 80','Elimina el service del deployment app1'],correct:1,exp:'NodePort expone el service en un puerto del nodo físico, permitiendo acceso externo al clúster.'},
+  {topic:'kubernetes',type:'om',q:'¿Qué objeto de Kubernetes se usa para almacenar configuraciones en formato clave-valor NO sensibles?',opts:['Secret','PersistentVolume','ConfigMap','Namespace'],correct:2,exp:'"Config: Almacenamiento de configuraciones en formato clave-valor." Secret es para info sensible (encriptado).'},
+  {topic:'kubernetes',type:'vf',q:'kubectl apply -f archivo.yaml crea o actualiza objetos, mientras kubectl create -f solo crea.',correct:'V',exp:'apply: crea o actualiza (idempotente). create: solo crea (falla si ya existe).'},
+  {topic:'kubernetes',type:'om',q:'¿Qué hace un Init Container?',opts:['Inicializa el clúster de Kubernetes','Se ejecuta antes de los containers principales cuando se crea un Pod','Crea el namespace inicial del proyecto','Configura el etcd al arrancar'],correct:1,exp:'"Init Container: Un container que se ejecuta cuando se crea un Pod" — corre antes de los containers principales.'},
+  {topic:'kubernetes',type:'om',q:'¿Cuál es el campo "kind" en un archivo YAML de Kubernetes que define un Pod?',opts:['"Pod"','"Container"','"Service"','"Replica"'],correct:0,exp:'El campo kind especifica el tipo de objeto: kind: Pod, kind: Deployment, kind: Service, etc.'},
+  {topic:'kubernetes',type:'vf',q:'HPA en Kubernetes significa Horizontal Pod Autoscaler y permite autoescalamiento de servicios.',correct:'V',exp:'"HPA y CRD: Autoescalamiento de Servicios, tipos custom en K8s."'},
+  {topic:'kubernetes',type:'om',q:'¿Cuál es la estructura mínima correcta de un archivo YAML de Kubernetes?',opts:['name, spec, replicas, image','apiVersion, kind, metadata, spec','kind, containers, ports, name','namespace, pod, service, ingress'],correct:1,exp:'Todo objeto YAML de Kubernetes necesita: apiVersion, kind, metadata, spec.'},
+  {topic:'kubernetes',type:'om',q:'Analiza: <code>kubectl run mipod --image=nginx --restart=Never</code>. ¿Qué crea?',opts:['Un Deployment con nginx','Un Pod llamado mipod con imagen nginx','Un Service nginx','Un ReplicaSet con nginx'],correct:1,exp:'--restart=Never indica que se crea un Pod standalone (no un Deployment). Se llama mipod y usa la imagen nginx.'},
+  {topic:'kubernetes',type:'vf',q:'Un ReplicaSet permite hacer rollback a versiones anteriores del deployment.',correct:'F',exp:'ReplicaSet: mantiene copias pero NO es versionable. Deployment sí permite versioning y rollback.'},
+  {topic:'kubernetes',type:'om',q:'¿Qué comando kubectl muestra los logs de un pod en tiempo real?',opts:['kubectl describe pod/podname','kubectl get pods -o wide','kubectl logs pod/podname -f','kubectl exec -it pod -- sh'],correct:2,exp:'"kubectl logs pod/podname -f" muestra los logs siguiendo el output en tiempo real (-f = follow).'},
+  {topic:'kubernetes',type:'om',q:'Un Ingress en Kubernetes requiere a menudo configuraciones de:',opts:['etcd','DNS','kubelet','kube-scheduler'],correct:1,exp:'"Se debe tomar en cuenta que con un ingress muchas veces es necesario hacer configuraciones de DNS."'},
+  {topic:'kubernetes',type:'vf',q:'El comando <code>kubectl delete -f objeto.yaml</code> elimina los objetos definidos en ese archivo.',correct:'V',exp:'Sí — kubectl acepta el flag -f para aplicar, crear o eliminar objetos según el YAML. delete -f borra lo que está en el archivo.'},
+];
+
+let questions = [...ALL_QUESTIONS];
+let answered = {};
+let correctCount = 0;
+let wrongCount = 0;
+let currentFilter = 'all';
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function shuffleQuestions() {
+  questions = shuffleArray([...ALL_QUESTIONS]);
+  resetAll(false);
+  renderQuestions();
+}
+
+function filterTopic(topic, btn) {
+  currentFilter = topic;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderQuestions();
+}
+
+function showAll() { renderQuestions(); }
+
+function showWrong() {
+  const container = document.getElementById('quiz-container');
+  const wrongIds = Object.keys(answered).filter(id => !answered[id]);
+  if (wrongIds.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:60px">¡Sin incorrectas aún!</div>';
+    return;
+  }
+  const wrongQs = wrongIds.map(id => questions[parseInt(id)]);
+  renderQuestions(wrongQs);
+}
+
+function renderQuestions(subset) {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+
+  let toRender = subset || (currentFilter === 'all' ? questions : questions.filter(q => q.topic === currentFilter));
+
+  toRender.forEach((q, localIdx) => {
+    const globalIdx = questions.indexOf(q);
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = `card-${globalIdx}`;
+
+    if (answered[globalIdx] === true) card.classList.add('answered-correct');
+    else if (answered[globalIdx] === false) card.classList.add('answered-wrong');
+
+    const typeBadge = q.type === 'vf'
+      ? '<span class="q-type-badge badge-vf">V/F</span>'
+      : '<span class="q-type-badge badge-om">Opción múltiple</span>';
+
+    const topicLabel = {
+      procesos: '⚙️ Procesos',
+      concurrencia: '⚡ Paralelismo & Concurrencia',
+      hilos: '🧵 Hilos',
+      ipc: '🔗 IPC',
+      algoritmos: '🔄 Algoritmos de Concurrencia',
+      kubernetes: '☸️ Kubernetes'
+    }[q.topic] || q.topic;
+
+    let optionsHTML = '';
+    if (q.type === 'vf') {
+      const isAnswered = answered[globalIdx] !== undefined;
+      const userV = answered[`${globalIdx}_val`];
+      optionsHTML = `<div class="options">
+        <button class="opt-btn ${isAnswered && userV==='V' ? (q.correct==='V'?'correct':'wrong') : (isAnswered&&q.correct==='V'?'correct':'')}"
+          onclick="answerVF(${globalIdx}, 'V', this)" ${isAnswered?'disabled':''}>
+          <span class="opt-key">V</span> Verdadero
+        </button>
+        <button class="opt-btn ${isAnswered && userV==='F' ? (q.correct==='F'?'correct':'wrong') : (isAnswered&&q.correct==='F'?'correct':'')}"
+          onclick="answerVF(${globalIdx}, 'F', this)" ${isAnswered?'disabled':''}>
+          <span class="opt-key">F</span> Falso
+        </button>
+      </div>`;
+    } else {
+      const letters = ['A','B','C','D'];
+      const isAnswered = answered[globalIdx] !== undefined;
+      const userAns = answered[`${globalIdx}_val`];
+      optionsHTML = `<div class="options">${q.opts.map((opt, oi) => {
+        let cls = '';
+        if (isAnswered) {
+          if (oi === q.correct) cls = 'correct';
+          else if (oi === userAns) cls = 'wrong';
+        }
+        return `<button class="opt-btn ${cls}" onclick="answerOM(${globalIdx}, ${oi}, this)" ${isAnswered?'disabled':''}>
+          <span class="opt-key">${letters[oi]}</span> ${opt}
+        </button>`;
+      }).join('')}</div>`;
+    }
+
+    const expCls = answered[globalIdx] !== undefined ? 'show ' + (answered[globalIdx] ? 'correct-exp' : 'wrong-exp') : '';
+    const expIcon = answered[globalIdx] ? '✅' : '❌';
+
+    card.innerHTML = `
+      <div class="topic-badge">${topicLabel}</div>
+      <div class="q-num">Pregunta ${globalIdx + 1} de ${questions.length} ${typeBadge}</div>
+      <div class="q-text">${q.q}</div>
+      ${optionsHTML}
+      <div class="explanation ${expCls}" id="exp-${globalIdx}">${expIcon} ${q.exp}</div>
+    `;
+    container.appendChild(card);
+  });
+
+  updateStats();
+}
+
+function answerVF(idx, val, btn) {
+  const q = questions[idx];
+  const correct = val === q.correct;
+  answered[idx] = correct;
+  answered[`${idx}_val`] = val;
+  if (correct) correctCount++; else wrongCount++;
+  updateStats();
+
+  const card = document.getElementById(`card-${idx}`);
+  card.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = true;
+    const bVal = b.textContent.trim().startsWith('V') ? 'V' : 'F';
+    if (bVal === q.correct) b.classList.add('correct');
+    else if (bVal === val) b.classList.add('wrong');
+  });
+  card.classList.add(correct ? 'answered-correct' : 'answered-wrong');
+
+  const exp = document.getElementById(`exp-${idx}`);
+  exp.className = `explanation show ${correct ? 'correct-exp' : 'wrong-exp'}`;
+  exp.innerHTML = `${correct ? '✅' : '❌'} ${q.exp}`;
+
+  checkComplete();
+}
+
+function answerOM(idx, val, btn) {
+  const q = questions[idx];
+  const correct = val === q.correct;
+  answered[idx] = correct;
+  answered[`${idx}_val`] = val;
+  if (correct) correctCount++; else wrongCount++;
+  updateStats();
+
+  const card = document.getElementById(`card-${idx}`);
+  card.querySelectorAll('.opt-btn').forEach((b, oi) => {
+    b.disabled = true;
+    if (oi === q.correct) b.classList.add('correct');
+    else if (oi === val) b.classList.add('wrong');
+  });
+  card.classList.add(correct ? 'answered-correct' : 'answered-wrong');
+
+  const exp = document.getElementById(`exp-${idx}`);
+  exp.className = `explanation show ${correct ? 'correct-exp' : 'wrong-exp'}`;
+  exp.innerHTML = `${correct ? '✅' : '❌'} ${q.exp}`;
+
+  checkComplete();
+}
+
+function updateStats() {
+  const total = questions.length;
+  const answeredCount = Object.keys(answered).filter(k => !k.includes('_')).length;
+  const remain = total - answeredCount;
+
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-wrong').textContent = wrongCount;
+  document.getElementById('stat-remain').textContent = remain;
+
+  const pct = Math.round((answeredCount / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${answeredCount} / ${total} respondidas`;
+}
+
+function checkComplete() {
+  const total = questions.length;
+  const answeredCount = Object.keys(answered).filter(k => !k.includes('_')).length;
+  if (answeredCount === total) showResults();
+}
+
+function showResults() {
+  document.getElementById('quiz-container').style.display = 'none';
+  const rs = document.getElementById('results-screen');
+  rs.style.display = 'block';
+
+  const pct = Math.round((correctCount / questions.length) * 100);
+  document.getElementById('res-num').textContent = correctCount;
+  document.getElementById('res-den').textContent = `/${questions.length}`;
+  document.getElementById('res-pct').textContent = `${pct}%`;
+
+  let msg = '', color = '';
+  if (pct >= 90) { msg = '🔥 ¡Excelente! Estás listo.'; color = 'var(--green)'; }
+  else if (pct >= 70) { msg = '👍 Bien, pero repasa los temas fallidos.'; color = 'var(--yellow)'; }
+  else { msg = '📚 Necesitas repasar más. ¡Tú puedes!'; color = 'var(--red)'; }
+  document.getElementById('res-msg').textContent = msg;
+  document.getElementById('res-msg').style.color = color;
+
+  // Por tema
+  const topics = ['procesos','concurrencia','hilos','ipc','algoritmos','kubernetes'];
+  const topicNames = { procesos:'Procesos', concurrencia:'Concurrencia', hilos:'Hilos', ipc:'IPC', algoritmos:'Algoritmos', kubernetes:'Kubernetes' };
+  let breakdown = '';
+  topics.forEach(t => {
+    const tqs = questions.map((q,i) => ({q,i})).filter(({q}) => q.topic === t);
+    const tCorrect = tqs.filter(({i}) => answered[i] === true).length;
+    const tTotal = tqs.length;
+    const tPct = tTotal ? Math.round((tCorrect/tTotal)*100) : 0;
+    const c = tPct >= 70 ? 'var(--green)' : tPct >= 50 ? 'var(--yellow)' : 'var(--red)';
+    breakdown += `<div class="tb-card"><div class="tb-topic">${topicNames[t]}</div><div class="tb-score" style="color:${c}">${tCorrect}/${tTotal} (${tPct}%)</div></div>`;
+  });
+  document.getElementById('res-breakdown').innerHTML = breakdown;
+}
+
+function resetAll(rerender = true) {
+  answered = {};
+  correctCount = 0;
+  wrongCount = 0;
+  document.getElementById('quiz-container').style.display = 'block';
+  document.getElementById('results-screen').style.display = 'none';
+  if (rerender) renderQuestions();
+  updateStats();
+}
+
+// Init
+renderQuestions();
+</script>
+</body>
+</html>
